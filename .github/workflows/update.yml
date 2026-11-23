@@ -65,7 +65,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - run: |
-          version="$(sed -n 's/^  version "\(.*\)"/\1/p' Formula/keepjay.rb)"
+          version="$(sed -n 's/.* from the v\(.*\) release.*/\1/p' Formula/keepjay.rb)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "keepjay $version"

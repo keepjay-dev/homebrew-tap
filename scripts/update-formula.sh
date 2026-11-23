@@ -41,7 +41,6 @@ cat > Formula/keepjay.rb <<RUBY
 class Keepjay < Formula
   desc "Local-first spaced repetition with flashcards in your code comments"
   homepage "https://github.com/$REPO"
-  version "$version"
   license "AGPL-3.0-or-later"
 
   on_macos do

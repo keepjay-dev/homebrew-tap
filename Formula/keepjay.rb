@@ -3,7 +3,6 @@
 class Keepjay < Formula
   desc "Local-first spaced repetition with flashcards in your code comments"
   homepage "https://github.com/keepjay-dev/keepjay"
-  version "0.2.0-alpha.3"
   license "AGPL-3.0-or-later"
 
   on_macos do
