@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Install the formula from this tap and run its test, on macOS and Linux.
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: brew install (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Homebrew with this checkout as the tap
+        id: brew
+        uses: Homebrew/actions/setup-homebrew@main
+      - run: brew style keepjay-dev/tap
+      - run: brew audit --formula keepjay-dev/tap/keepjay
+      - run: brew install keepjay-dev/tap/keepjay
+      - run: brew test keepjay-dev/tap/keepjay
+      - run: keepjay --version && kj --version

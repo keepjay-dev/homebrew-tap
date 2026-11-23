@@ -1,0 +1,72 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Keep Formula/keepjay.rb on the newest Keepjay release. Runs every 6 hours and on demand;
+# it tests the new formula on macOS and Linux before committing it.
+name: Update formula
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release to package, e.g. 0.2.0-alpha.4 (default: the newest)"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-formula
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Newer release?
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh scripts/update-formula.sh "${{ inputs.version }}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - id: diff
+        run: |
+          if git diff --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"
+          else git diff; echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+
+  test:
+    name: brew install (${{ matrix.os }})
+    needs: check
+    if: needs.check.outputs.changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Homebrew/actions/setup-homebrew@main
+      - run: sh scripts/update-formula.sh "${{ inputs.version }}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - run: brew install keepjay-dev/tap/keepjay
+      - run: brew test keepjay-dev/tap/keepjay
+
+  commit:
+    name: Commit the formula
+    needs: [check, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh scripts/update-formula.sh "${{ inputs.version }}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - run: |
+          version="$(sed -n 's/^  version "\(.*\)"/\1/p' Formula/keepjay.rb)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "keepjay $version"
+          git push
