@@ -25,7 +25,10 @@ jobs:
       - name: Set up Homebrew with this checkout as the tap
         id: brew
         uses: Homebrew/actions/setup-homebrew@main
-      - run: brew style keepjay-dev/tap
+      - run: brew style keepjay-dev/tap/keepjay
+      - name: Shell script (POSIX sh)
+        if: runner.os == 'Linux'
+        run: shellcheck -s sh scripts/update-formula.sh
       - run: brew audit --formula keepjay-dev/tap/keepjay
       - run: brew install keepjay-dev/tap/keepjay
       - run: brew test keepjay-dev/tap/keepjay
